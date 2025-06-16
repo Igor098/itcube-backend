@@ -1,0 +1,120 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class InitAllTables1750103368082 implements MigrationInterface {
+    name = 'InitAllTables1750103368082'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE "classrooms" ("id" SERIAL NOT NULL, "name" character varying(100) NOT NULL, "capacity" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_7408ee0640cc22c99da56befca0" UNIQUE ("name"), CONSTRAINT "PK_20b7b82896c06eda27548bd0c24" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "schedule_sessions" ("id" SERIAL NOT NULL, "topic" character varying(120) NOT NULL, "lesson_date" date NOT NULL, "start_time" TIME NOT NULL, "end_time" TIME NOT NULL, "group_id" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "classroom_id" integer, CONSTRAINT "PK_4ad33be7055adcc30fca3d14be0" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "idx_schedule_lesson_date" ON "schedule_sessions" ("lesson_date") `);
+        await queryRunner.query(`CREATE INDEX "idx_schedule_group_id" ON "schedule_sessions" ("group_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_schedule_group" ON "schedule_sessions" ("group_id") `);
+        await queryRunner.query(`CREATE TYPE "public"."attendance_records_status_enum" AS ENUM('присутствовал', 'отсутствовал', 'опоздал', 'не задано')`);
+        await queryRunner.query(`CREATE TABLE "attendance_records" ("id" SERIAL NOT NULL, "status" "public"."attendance_records_status_enum" NOT NULL DEFAULT 'не задано', "comment" text, "student_id" integer NOT NULL, "session_id" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "uq_attendance_record" UNIQUE ("student_id", "session_id"), CONSTRAINT "PK_946920332f5bc9efad3f3023b96" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "idx_attendance_student_id" ON "attendance_records" ("student_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_attendance_session_id" ON "attendance_records" ("session_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_attendance_student" ON "attendance_records" ("student_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_attendance_session" ON "attendance_records" ("session_id") `);
+        await queryRunner.query(`CREATE TABLE "students" ("id" SERIAL NOT NULL, "full_name" character varying(50) NOT NULL, "birth_date" date, "user_id" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "REL_fb3eff90b11bddf7285f9b4e28" UNIQUE ("user_id"), CONSTRAINT "PK_7d7f07271ad4ce999880713f05e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_student_user_id" ON "students" ("user_id") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_student_user" ON "students" ("user_id") `);
+        await queryRunner.query(`CREATE TABLE "group_students" ("id" SERIAL NOT NULL, "enrolment_date" date NOT NULL, "graduation_date" date, "isExpelled" boolean NOT NULL DEFAULT false, "student_id" integer NOT NULL, "group_id" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "uq_group_student" UNIQUE ("group_id", "student_id"), CONSTRAINT "PK_cd596d1c8176853f748dc44af4b" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "idx_group_student_student_id" ON "group_students" ("student_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_group_student_group_id" ON "group_students" ("group_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_group_student_student" ON "group_students" ("student_id") `);
+        await queryRunner.query(`CREATE INDEX "idx_group_student_group" ON "group_students" ("group_id") `);
+        await queryRunner.query(`CREATE TABLE "programs" ("id" SERIAL NOT NULL, "name" character varying(100) NOT NULL, "description" text, "duration_hours" integer NOT NULL, "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_d43c664bcaafc0e8a06dfd34e05" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_program_name" ON "programs" ("name") `);
+        await queryRunner.query(`CREATE TABLE "school_years" ("id" SERIAL NOT NULL, "period" character varying(10) NOT NULL, "start_date" date NOT NULL, "end_date" date NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_3fe99d570a61178cb99065783cf" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "groups" ("id" SERIAL NOT NULL, "name" character varying(100) NOT NULL, "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "program_id" integer, "school_year_id" integer, "teacher_id" integer, CONSTRAINT "PK_659d1483316afb28afd3a90646e" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_group_name" ON "groups" ("name") `);
+        await queryRunner.query(`CREATE INDEX "idx_group_teacher_id" ON "groups" ("teacher_id") `);
+        await queryRunner.query(`CREATE TABLE "teacher_details" ("id" SERIAL NOT NULL, "specialization" character varying(100) NOT NULL, "employee_id" integer NOT NULL, CONSTRAINT "REL_1e8cedeecbd08bfebc5caf0de5" UNIQUE ("employee_id"), CONSTRAINT "PK_6f127250bdb6fc750fe3bff6957" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "idx_teacher_detail_employee_id" ON "teacher_details" ("employee_id") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_teacher_detail_employee" ON "teacher_details" ("employee_id") `);
+        await queryRunner.query(`CREATE TABLE "employees" ("id" SERIAL NOT NULL, "full_name" character varying(100) NOT NULL, "birth_date" date, "post" character varying(50) NOT NULL, "education" character varying(100), "hire_date" date NOT NULL, "user_id" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "REL_2d83c53c3e553a48dadb9722e3" UNIQUE ("user_id"), CONSTRAINT "PK_b9535a98350d5b26e7eb0c26af4" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE INDEX "idx_employee_user_id" ON "employees" ("user_id") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_employee_user" ON "employees" ("user_id") `);
+        await queryRunner.query(`CREATE TABLE "roles" ("id" SERIAL NOT NULL, "name" character varying(20) NOT NULL, "description" text, CONSTRAINT "PK_c1433d71a4838793a49dcad46ab" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_role_name" ON "roles" ("name") `);
+        await queryRunner.query(`CREATE TABLE "user_roles" ("user_id" integer NOT NULL, "role_id" integer NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_23ed6f04fe43066df08379fd034" PRIMARY KEY ("user_id", "role_id"))`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "created_at" TIMESTAMP NOT NULL DEFAULT now()`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "updated_at" TIMESTAMP NOT NULL DEFAULT now()`);
+        await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3"`);
+        await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "UQ_a000cca60bcf04454e727699490"`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_user_email" ON "users" ("email") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "idx_user_phone" ON "users" ("phone") `);
+        await queryRunner.query(`ALTER TABLE "schedule_sessions" ADD CONSTRAINT "FK_53c3b7e8765dc51447ae946a864" FOREIGN KEY ("group_id") REFERENCES "groups"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "schedule_sessions" ADD CONSTRAINT "FK_915b6726634111c14c44f3f060d" FOREIGN KEY ("classroom_id") REFERENCES "classrooms"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "attendance_records" ADD CONSTRAINT "FK_dbace05c012526710663f8d8911" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "attendance_records" ADD CONSTRAINT "FK_c51be2c1149e22de76b17626cb7" FOREIGN KEY ("session_id") REFERENCES "schedule_sessions"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "students" ADD CONSTRAINT "FK_fb3eff90b11bddf7285f9b4e281" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "group_students" ADD CONSTRAINT "FK_86ac11b05c01e9981dd4e4ba39e" FOREIGN KEY ("student_id") REFERENCES "students"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "group_students" ADD CONSTRAINT "FK_8b5b7bb7e2c2f1a8e4319ae3394" FOREIGN KEY ("group_id") REFERENCES "groups"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "groups" ADD CONSTRAINT "FK_987149d2f3fd0b72140bd5c713d" FOREIGN KEY ("program_id") REFERENCES "programs"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "groups" ADD CONSTRAINT "FK_feed652f0ab91317902b36ec601" FOREIGN KEY ("school_year_id") REFERENCES "school_years"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "groups" ADD CONSTRAINT "FK_e9703f1aa2b5ae1000816cf385d" FOREIGN KEY ("teacher_id") REFERENCES "teacher_details"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "teacher_details" ADD CONSTRAINT "FK_1e8cedeecbd08bfebc5caf0de53" FOREIGN KEY ("employee_id") REFERENCES "employees"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "employees" ADD CONSTRAINT "FK_2d83c53c3e553a48dadb9722e38" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "user_roles" ADD CONSTRAINT "FK_87b8888186ca9769c960e926870" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "user_roles" ADD CONSTRAINT "FK_b23c65e50a758245a33ee35fda1" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "user_roles" DROP CONSTRAINT "FK_b23c65e50a758245a33ee35fda1"`);
+        await queryRunner.query(`ALTER TABLE "user_roles" DROP CONSTRAINT "FK_87b8888186ca9769c960e926870"`);
+        await queryRunner.query(`ALTER TABLE "employees" DROP CONSTRAINT "FK_2d83c53c3e553a48dadb9722e38"`);
+        await queryRunner.query(`ALTER TABLE "teacher_details" DROP CONSTRAINT "FK_1e8cedeecbd08bfebc5caf0de53"`);
+        await queryRunner.query(`ALTER TABLE "groups" DROP CONSTRAINT "FK_e9703f1aa2b5ae1000816cf385d"`);
+        await queryRunner.query(`ALTER TABLE "groups" DROP CONSTRAINT "FK_feed652f0ab91317902b36ec601"`);
+        await queryRunner.query(`ALTER TABLE "groups" DROP CONSTRAINT "FK_987149d2f3fd0b72140bd5c713d"`);
+        await queryRunner.query(`ALTER TABLE "group_students" DROP CONSTRAINT "FK_8b5b7bb7e2c2f1a8e4319ae3394"`);
+        await queryRunner.query(`ALTER TABLE "group_students" DROP CONSTRAINT "FK_86ac11b05c01e9981dd4e4ba39e"`);
+        await queryRunner.query(`ALTER TABLE "students" DROP CONSTRAINT "FK_fb3eff90b11bddf7285f9b4e281"`);
+        await queryRunner.query(`ALTER TABLE "attendance_records" DROP CONSTRAINT "FK_c51be2c1149e22de76b17626cb7"`);
+        await queryRunner.query(`ALTER TABLE "attendance_records" DROP CONSTRAINT "FK_dbace05c012526710663f8d8911"`);
+        await queryRunner.query(`ALTER TABLE "schedule_sessions" DROP CONSTRAINT "FK_915b6726634111c14c44f3f060d"`);
+        await queryRunner.query(`ALTER TABLE "schedule_sessions" DROP CONSTRAINT "FK_53c3b7e8765dc51447ae946a864"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_user_phone"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_user_email"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "UQ_a000cca60bcf04454e727699490" UNIQUE ("phone")`);
+        await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "UQ_97672ac88f789774dd47f7c8be3" UNIQUE ("email")`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "updated_at"`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "created_at"`);
+        await queryRunner.query(`DROP TABLE "user_roles"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_role_name"`);
+        await queryRunner.query(`DROP TABLE "roles"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_employee_user"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_employee_user_id"`);
+        await queryRunner.query(`DROP TABLE "employees"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_teacher_detail_employee"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_teacher_detail_employee_id"`);
+        await queryRunner.query(`DROP TABLE "teacher_details"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_group_teacher_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_group_name"`);
+        await queryRunner.query(`DROP TABLE "groups"`);
+        await queryRunner.query(`DROP TABLE "school_years"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_program_name"`);
+        await queryRunner.query(`DROP TABLE "programs"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_group_student_group"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_group_student_student"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_group_student_group_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_group_student_student_id"`);
+        await queryRunner.query(`DROP TABLE "group_students"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_student_user"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_student_user_id"`);
+        await queryRunner.query(`DROP TABLE "students"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_attendance_session"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_attendance_student"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_attendance_session_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_attendance_student_id"`);
+        await queryRunner.query(`DROP TABLE "attendance_records"`);
+        await queryRunner.query(`DROP TYPE "public"."attendance_records_status_enum"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_schedule_group"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_schedule_group_id"`);
+        await queryRunner.query(`DROP INDEX "public"."idx_schedule_lesson_date"`);
+        await queryRunner.query(`DROP TABLE "schedule_sessions"`);
+        await queryRunner.query(`DROP TABLE "classrooms"`);
+    }
+
+}
