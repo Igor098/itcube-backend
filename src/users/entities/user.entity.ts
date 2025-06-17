@@ -1,4 +1,4 @@
-import { VALIDATION } from '@/common/constants/validation';
+import { VALIDATION } from '@/libs/common/constants/validation';
 import { Employee } from '@/employees/entities/employee.entity';
 import { Student } from '@/students/entities/student.entity';
 import { UserRole } from '@/user_roles/entities/user_role.entity';
@@ -12,6 +12,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Account } from '@/accounts/entities/account.entity';
+
+export enum AuthMethod {
+  CREDENTIALS = 'credentials',
+  GOOGLE = 'google',
+  YANDEX = 'yandex',
+}
 
 @Entity({ name: 'users' })
 export class User {
@@ -28,14 +35,6 @@ export class User {
 
   @Column({
     type: 'varchar',
-    length: VALIDATION.PHONE.LENGTH.MAX,
-    nullable: false,
-  })
-  @Index('idx_user_phone', { unique: true })
-  phone: string;
-
-  @Column({
-    type: 'varchar',
     length: VALIDATION.PASSWORD.LENGTH.MAX,
     nullable: false,
   })
@@ -47,6 +46,37 @@ export class User {
     nullable: false,
   })
   username: string;
+
+  @Column({
+    type: 'enum',
+    enum: AuthMethod,
+    default: AuthMethod.CREDENTIALS,
+  })
+  method: AuthMethod;
+
+  @Column({
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
+  picture?: string;
+
+  @Column({
+    type: 'boolean',
+    name: 'is_verified',
+    default: false,
+  })
+  isVerified: boolean;
+
+  @Column({
+    type: 'boolean',
+    name: 'is_two_factor_enabled',
+    default: false,
+  })
+  isTwoFactorEnabled: boolean;
+
+  @OneToMany(() => Account, (account) => account.user)
+  accounts: Account[];
 
   @OneToMany(() => UserRole, (userRole) => userRole.user)
   userRoles?: UserRole[];

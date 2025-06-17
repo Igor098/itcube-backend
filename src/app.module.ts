@@ -20,10 +20,16 @@ import { StudentsModule } from './students/students.module';
 import { ClassroomsModule } from './classrooms/classrooms.module';
 import { PositionModule } from './positions/positions.module';
 import AppDataSource from './database/data-source/typeorm';
+import { IS_DEV_ENV } from './libs/common/utils/is-dev.util';
+import { AccountsModule } from './accounts/accounts.module';
+import { TokensModule } from './tokens/tokens.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      ignoreEnvFile: !IS_DEV_ENV, // Ignore .env file if it exists
+    }),
     AuthModule,
     UsersModule,
     TypeOrmModule.forRootAsync({
@@ -47,6 +53,8 @@ import AppDataSource from './database/data-source/typeorm';
     StudentsModule,
     ClassroomsModule,
     PositionModule,
+    AccountsModule,
+    TokensModule,
   ],
   controllers: [AppController],
   providers: [AppService],
