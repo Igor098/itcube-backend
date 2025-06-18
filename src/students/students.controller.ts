@@ -1,7 +1,70 @@
-import { Controller } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { StudentsService } from './students.service';
+import { StudentResponseDto } from './dto/student-response.dto';
+import { Authorization } from '@/auth/decorators/auth.decorator';
+import {
+  mapStudentsToListDto,
+  mapStudentToDto,
+} from './mappers/student.mapper';
+import { StudentDto } from './dto/student.dto';
+import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 
 @Controller('students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
+
+  @Authorization('admin')
+  @Get('all')
+  @HttpCode(HttpStatus.OK)
+  public async findAll(): Promise<StudentResponseDto[]> {
+    const students = await this.studentsService.findAll();
+
+    return mapStudentsToListDto(students);
+  }
+
+  @Authorization('admin')
+  @Get('by-id/:id')
+  @HttpCode(HttpStatus.OK)
+  public async findById(@Param('id') id: string): Promise<StudentResponseDto> {
+    const student = await this.studentsService.findById(+id);
+    return mapStudentToDto(student);
+  }
+
+  @Authorization('admin')
+  @Post('create')
+  @HttpCode(HttpStatus.CREATED)
+  public async create(
+    @Body() student: StudentDto,
+  ): Promise<StudentResponseDto> {
+    const newStudent = await this.studentsService.create(student);
+    return mapStudentToDto(newStudent);
+  }
+
+  @Authorization('admin')
+  @Put('update/:id')
+  @HttpCode(HttpStatus.OK)
+  public async update(
+    @Param('id') id: string,
+    @Body() student: StudentDto,
+  ): Promise<StudentResponseDto> {
+    const updatedStudent = await this.studentsService.update(+id, student);
+    return mapStudentToDto(updatedStudent);
+  }
+
+  @Authorization('admin')
+  @Delete('delete/:id')
+  @HttpCode(HttpStatus.OK)
+  public async delete(@Param('id') id: string): Promise<DeleteResponseDto> {
+    return await this.studentsService.delete(+id);
+  }
 }

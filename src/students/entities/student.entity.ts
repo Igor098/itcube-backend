@@ -1,6 +1,7 @@
 import { AttendanceRecord } from '@/attendance_records/entities/attendance_record.entity';
 import { GroupStudent } from '@/group_students/entities/group_student.entity';
 import { User } from '@/users/entities/user.entity';
+import { differenceInYears } from 'date-fns';
 import {
   Column,
   CreateDateColumn,
@@ -46,10 +47,10 @@ export class Student {
   @Column({
     type: 'int',
     name: 'user_id',
-    nullable: false,
+    nullable: true,
   })
   @Index('idx_student_user_id', { unique: true })
-  userId: number;
+  userId?: number;
 
   @OneToOne(() => User, (user) => user.student)
   @JoinColumn({ name: 'user_id' })
@@ -69,4 +70,11 @@ export class Student {
     default: () => 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
+
+  public get age(): number {
+    if (!Boolean(this.birthDate)) {
+      throw new Error('Отсутствует дата рождения');
+    }
+    return differenceInYears(new Date(), new Date(this.birthDate));
+  }
 }
