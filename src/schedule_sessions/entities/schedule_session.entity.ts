@@ -13,6 +13,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum ScheduleStatus {
+  PLANNED = 'запланировано',
+  COMPLETED = 'проведено',
+  CANCELED = 'отменено',
+}
+
 @Entity({ name: 'schedule_sessions' })
 export class ScheduleSession {
   @PrimaryGeneratedColumn({
@@ -50,6 +56,14 @@ export class ScheduleSession {
   endTime: string;
 
   @Column({
+    type: 'enum',
+    enum: ScheduleStatus,
+    nullable: false,
+    default: ScheduleStatus.PLANNED,
+  })
+  status: ScheduleStatus;
+
+  @Column({
     type: 'int',
     name: 'group_id',
     nullable: false,
@@ -63,6 +77,13 @@ export class ScheduleSession {
   @JoinColumn({ name: 'group_id' })
   @Index('idx_schedule_group')
   group: Group;
+
+  @Column({
+    type: 'int',
+    name: 'classroom_id',
+    nullable: true,
+  })
+  classroomId: number;
 
   @ManyToOne(() => Classroom, (classroom) => classroom.scheduleSessions, {
     onDelete: 'SET NULL',
