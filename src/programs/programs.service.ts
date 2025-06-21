@@ -5,10 +5,11 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindOptionsWhere, ILike } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { Program } from './entities/program.entity';
 import { ProgramDto } from './dto/program.dto';
 import { FilterProgramDto } from './dto/filter-program.dto';
+import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 
 @Injectable()
 export class ProgramsService {
@@ -21,7 +22,6 @@ export class ProgramsService {
     const existing = await this.programRepository.findOne({
       where: { name: dto.name },
     });
-
     if (existing) {
       throw new ConflictException('Программа с таким названием уже существует');
     }
@@ -32,14 +32,14 @@ export class ProgramsService {
       );
     }
 
-    const program = this.programRepository.create(dto);
-    return this.programRepository.save(program);
+    const newProgram = await this.programRepository.save(dto);
+    return this.findById(newProgram.id);
   }
 
   async findAll(): Promise<Program[]> {
     return this.programRepository.find({
-      order: { name: 'ASC' },
       relations: ['groups'],
+      order: { name: 'ASC' },
     });
   }
 
@@ -48,51 +48,40 @@ export class ProgramsService {
       where: { id },
       relations: ['groups'],
     });
-
     if (!program) {
       throw new NotFoundException('Программа не найдена');
     }
-
     return program;
   }
 
-  async findByName(name: string): Promise<Program> {
-    const program = await this.programRepository.findOne({
-      where: { name },
-      relations: ['groups'],
-    });
+  async filterPrograms(
+    q?: string,
+    filters?: FilterProgramDto,
+  ): Promise<Program[]> {
+    const query = this.programRepository
+      .createQueryBuilder('program')
+      .leftJoinAndSelect('program.groups', 'groups');
 
-    if (!program) {
-      throw new NotFoundException('Программа с таким названием не найдена');
+    if (filters?.durationHours !== undefined) {
+      query.andWhere({ durationHours: filters.durationHours });
     }
 
-    return program;
-  }
-
-  async filterPrograms(filters: FilterProgramDto): Promise<Program[]> {
-    const where: FindOptionsWhere<Program> = {};
-
-    if (filters.minHours !== undefined && filters.maxHours !== undefined) {
-      where.durationHours = Between(filters.minHours, filters.maxHours);
-    } else if (filters.minHours !== undefined) {
-      where.durationHours = Between(filters.minHours, 9999);
-    } else if (filters.maxHours !== undefined) {
-      where.durationHours = Between(0, filters.maxHours);
+    if (filters?.isActive !== undefined) {
+      query.andWhere({ isActive: filters.isActive });
     }
 
-    if (filters.name) {
-      where.name = ILike(`%${filters.name}%`);
+    if (Boolean(q)) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('program.name ILIKE :q').orWhere(
+            'program.description ILIKE :q',
+          );
+        }),
+        { q: `%${q}%` },
+      );
     }
 
-    if (filters.isActive !== undefined) {
-      where.isActive = filters.isActive;
-    }
-
-    return this.programRepository.find({
-      where,
-      relations: ['groups'],
-      order: { name: 'ASC' },
-    });
+    return await query.getMany();
   }
 
   async update(id: number, dto: ProgramDto): Promise<Program> {
@@ -102,7 +91,6 @@ export class ProgramsService {
       const existing = await this.programRepository.findOne({
         where: { name: dto.name },
       });
-
       if (existing) {
         throw new ConflictException(
           'Программа с таким названием уже существует',
@@ -116,12 +104,20 @@ export class ProgramsService {
       );
     }
 
-    Object.assign(program, dto);
-    return this.programRepository.save(program);
+    return this.programRepository.save({ ...program, ...dto });
   }
 
-  async delete(id: number): Promise<void> {
-    const program = await this.findById(id);
+  async delete(id: number): Promise<DeleteResponseDto> {
+    const program = await this.programRepository.findOne({ where: { id: id } });
+
+    if (!program) {
+      throw new NotFoundException('Программа не найдена');
+    }
+
+    const p_id = program.id;
+
     await this.programRepository.remove(program);
+
+    return { isDeleted: true, id: p_id };
   }
 }

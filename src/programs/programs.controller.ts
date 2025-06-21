@@ -4,77 +4,77 @@ import {
   Post,
   Body,
   Param,
-  Delete,
   Query,
-  HttpCode,
-  HttpStatus,
   Put,
-  ParseIntPipe,
-  ValidationPipe,
+  Delete,
+  ParseIntPipe, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
 import { ProgramDto } from './dto/program.dto';
 import { FilterProgramDto } from './dto/filter-program.dto';
-import { ProgramResponseDto } from './dto/program-response.dto';
 import {
   mapProgramToDto,
   mapProgramsToListDto,
 } from './mappers/program.mapper';
+import { Authorization } from '@/auth/decorators/auth.decorator';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
+import { ProgramResponseDto } from '@/programs/dto/program-response.dto';
+import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 
 @Controller('programs')
-export class ProgramController {
-  constructor(private readonly programService: ProgramsService) {}
+export class ProgramsController {
+  constructor(private readonly programsService: ProgramsService) {}
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body(new ValidationPipe()) dto: ProgramDto): Promise<ProgramResponseDto> {
-    const program = await this.programService.create(dto);
-    return mapProgramToDto(program);
-  }
-
+  @Authorization(RoleName.ADMIN)
+  @HttpCode(HttpStatus.OK)
   @Get('all')
   async findAll(): Promise<ProgramResponseDto[]> {
-    const programs = await this.programService.findAll();
+    const programs = await this.programsService.findAll();
     return mapProgramsToListDto(programs);
   }
 
-  @Get(':id')
-  async findById(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<ProgramResponseDto> {
-    const program = await this.programService.findById(id);
-    return mapProgramToDto(program);
-  }
-
-  @Get('search/by-name')
-  async findByName(
-    @Query('name') name: string,
-  ): Promise<ProgramResponseDto> {
-    const program = await this.programService.findByName(name);
-    return mapProgramToDto(program);
-  }
-
+  @Authorization(RoleName.ADMIN)
+  @HttpCode(HttpStatus.OK)
   @Get('filter')
   async filter(
-    @Query(new ValidationPipe({ transform: true }))
-    filters: FilterProgramDto,
+    @Query('q') q: string,
+    @Query() filters: FilterProgramDto,
   ): Promise<ProgramResponseDto[]> {
-    const programs = await this.programService.filterPrograms(filters);
+    const programs = await this.programsService.filterPrograms(q, filters);
     return mapProgramsToListDto(programs);
   }
 
-  @Put(':id')
-  async update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body(new ValidationPipe()) dto: ProgramDto,
-  ): Promise<ProgramResponseDto> {
-    const program = await this.programService.update(id, dto);
+  @Authorization(RoleName.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @Get('by-id/:id')
+  async findById(@Param('id') id: string): Promise<ProgramResponseDto> {
+    const program = await this.programsService.findById(+id);
     return mapProgramToDto(program);
   }
 
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    await this.programService.delete(id);
+  @Authorization(RoleName.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  @Post('create')
+  async create(@Body() dto: ProgramDto): Promise<ProgramResponseDto> {
+    const program = await this.programsService.create(dto);
+    return mapProgramToDto(program);
+  }
+
+  @Authorization(RoleName.ADMIN)
+  @Put('update/:id')
+  @HttpCode(HttpStatus.OK)
+  async update(
+    @Param('id') id: string,
+    @Body() dto: ProgramDto,
+  ): Promise<ProgramResponseDto> {
+    const program = await this.programsService.update(+id, dto);
+    return mapProgramToDto(program);
+  }
+
+  @Authorization(RoleName.ADMIN)
+  @Delete('delete/:id')
+  @HttpCode(HttpStatus.OK)
+  async delete(@Param('id') id: string): Promise<DeleteResponseDto> {
+    return await this.programsService.delete(+id);
   }
 }

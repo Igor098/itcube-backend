@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsBoolean, Length, Min, Max } from 'class-validator';
+import { IsString, IsInt, IsBoolean, Min, Max, Length } from 'class-validator';
 
 export class ProgramDto {
   @IsString({ message: 'Название программы должно быть строкой' })
@@ -8,20 +8,20 @@ export class ProgramDto {
   @IsString({ message: 'Описание должно быть строкой' })
   description: string;
 
-  @IsInt({ message: 'Длительность должна быть целым числом (в часах)' })
-  @Min(0, { message: 'Длительность не может быть отрицательной' })
+  @IsInt({ message: 'Длительность должна быть числом' })
+  @Min(0, { message: 'Длительность не может быть меньше 0' })
   durationHours: number;
 
-  @IsInt({ message: 'Минимальный возраст должен быть целым числом' })
-  @Min(0, { message: 'Минимальный возраст не может быть отрицательным' })
-  @Max(18, { message: 'Максимальный допустимый минимальный возраст - 18' })
+  @IsInt({ message: 'Минимальный возраст должен быть числом' })
+  @Min(0, { message: 'Минимальный возраст не может быть меньше 0' })
+  @Max(18, { message: 'Минимальный возраст не может быть больше 18' })
   minAge: number;
 
-  @IsInt({ message: 'Максимальный возраст должен быть целым числом' })
-  @Min(0, { message: 'Максимальный возраст не может быть отрицательным' })
-  @Max(18, { message: 'Максимальный возраст не должен превышать 18' })
+  @IsInt({ message: 'Максимальный возраст должен быть числом' })
+  @Min(0, { message: 'Максимальный возраст не может быть меньше 0' })
+  @Max(18, { message: 'Максимальный возраст не может быть больше 18' })
   maxAge: number;
 
-  @IsBoolean({ message: 'Статус активности должен быть true или false' })
+  @IsBoolean({ message: 'Активность должна быть true/false' })
   isActive: boolean;
 }
