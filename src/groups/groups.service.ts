@@ -8,6 +8,7 @@ import { Group } from './entities/group.entity';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { GroupDto } from './dto/group.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
+import { GroupFilterDto } from './dto/group-filter.dto';
 
 @Injectable()
 export class GroupsService {
@@ -41,6 +42,41 @@ export class GroupsService {
       throw new NotFoundException('Группа не найдена!');
     }
     return group;
+  }
+
+  public async findManyByFilters(
+    q?: string,
+    filters?: GroupFilterDto,
+  ): Promise<Group[]> {
+    const query = this.getFindQueryBuilder();
+
+    if (filters?.isActive !== undefined) {
+      query.andWhere({ isActive: filters.isActive });
+    }
+
+    if (Boolean(q)) {
+      query.andWhere('name ILIKE :q', { q: `%${q}%` });
+    }
+
+    return await query.getMany();
+  }
+
+  public async findManyByTeacherAndFilters(
+    teacherId: number,
+    q?: string,
+    filters?: GroupFilterDto,
+  ): Promise<Group[]> {
+    const query = this.getFindQueryBuilder().where({ teacherId });
+
+    if (filters?.isActive !== undefined) {
+      query.andWhere({ isActive: filters.isActive });
+    }
+
+    if (Boolean(q)) {
+      query.andWhere('name ILIKE :q', { q: `%${q}%` });
+    }
+
+    return await query.getMany();
   }
 
   public async findByTeacher(teacherId: number): Promise<Group[]> {

@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  ValidationPipe,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { Authorization } from '@/auth/decorators/auth.decorator';
@@ -17,6 +18,7 @@ import { GroupListItemDto, GroupResponseDto } from './dto/group-response.dto';
 import { mapGroupsToListDto, mapGroupToDto } from './mappers/group.mapper';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 import { RoleName } from '@/user_roles/entities/user_role.entity';
+import { GroupFilterDto } from './dto/group-filter.dto';
 
 @Controller('groups')
 export class GroupsController {
@@ -46,6 +48,33 @@ export class GroupsController {
   ): Promise<GroupResponseDto> {
     const group = await this.groupsService.findByName(name);
     return mapGroupToDto(group);
+  }
+
+  @Authorization(RoleName.ADMIN)
+  @Get('by-filters')
+  @HttpCode(HttpStatus.OK)
+  public async findManyByFilters(
+    @Query('q') q?: string,
+    @Query(new ValidationPipe({ transform: true })) filters?: GroupFilterDto,
+  ): Promise<GroupListItemDto[]> {
+    const groups = await this.groupsService.findManyByFilters(q, filters);
+    return mapGroupsToListDto(groups);
+  }
+
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
+  @Get('by-filtered/teacher/:teacherId')
+  @HttpCode(HttpStatus.OK)
+  public async findManyByTeacherAndFilters(
+    @Param('teacherId') teacherId: string,
+    @Query('q') q?: string,
+    @Query(new ValidationPipe({ transform: true })) filters?: GroupFilterDto,
+  ): Promise<GroupListItemDto[]> {
+    const groups = await this.groupsService.findManyByTeacherAndFilters(
+      +teacherId,
+      q,
+      filters,
+    );
+    return mapGroupsToListDto(groups);
   }
 
   @Authorization(RoleName.ADMIN, RoleName.TEACHER)
