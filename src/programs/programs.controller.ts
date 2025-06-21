@@ -6,59 +6,70 @@ import {
   Param,
   Delete,
   Query,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
   Put,
-  UsePipes,
+  ParseIntPipe,
   ValidationPipe,
 } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
 import { ProgramDto } from './dto/program.dto';
+import { FilterProgramDto } from './dto/filter-program.dto';
 import { ProgramResponseDto } from './dto/program-response.dto';
+import {
+  mapProgramToDto,
+  mapProgramsToListDto,
+} from './mappers/program.mapper';
 
 @Controller('programs')
-@UsePipes(new ValidationPipe({ transform: true }))
 export class ProgramController {
   constructor(private readonly programService: ProgramsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: ProgramDto): Promise<ProgramResponseDto> {
-    return this.programService.create(dto);
+  async create(@Body(new ValidationPipe()) dto: ProgramDto): Promise<ProgramResponseDto> {
+    const program = await this.programService.create(dto);
+    return mapProgramToDto(program);
   }
 
-  @Get()
+  @Get('all')
   async findAll(): Promise<ProgramResponseDto[]> {
-    return this.programService.findAll();
+    const programs = await this.programService.findAll();
+    return mapProgramsToListDto(programs);
   }
 
   @Get(':id')
   async findById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ProgramResponseDto> {
-    return this.programService.findById(id);
+    const program = await this.programService.findById(id);
+    return mapProgramToDto(program);
   }
 
   @Get('search/by-name')
-  async findByName(@Query('name') name: string): Promise<ProgramResponseDto> {
-    return this.programService.findByName(name);
+  async findByName(
+    @Query('name') name: string,
+  ): Promise<ProgramResponseDto> {
+    const program = await this.programService.findByName(name);
+    return mapProgramToDto(program);
   }
 
-  @Get('filter/by-duration')
-  async filterByDuration(
-    @Query('minHours', new ParseIntPipe({ optional: true })) minHours?: number,
-    @Query('maxHours', new ParseIntPipe({ optional: true })) maxHours?: number,
+  @Get('filter')
+  async filter(
+    @Query(new ValidationPipe({ transform: true }))
+    filters: FilterProgramDto,
   ): Promise<ProgramResponseDto[]> {
-    return this.programService.filterByDuration(minHours, maxHours);
+    const programs = await this.programService.filterPrograms(filters);
+    return mapProgramsToListDto(programs);
   }
 
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: ProgramDto,
+    @Body(new ValidationPipe()) dto: ProgramDto,
   ): Promise<ProgramResponseDto> {
-    return this.programService.update(id, dto);
+    const program = await this.programService.update(id, dto);
+    return mapProgramToDto(program);
   }
 
   @Delete(':id')

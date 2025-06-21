@@ -5,11 +5,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between, FindOptionsWhere, ILike } from 'typeorm';
 import { Program } from './entities/program.entity';
 import { ProgramDto } from './dto/program.dto';
-import { ProgramResponseDto } from './dto/program-response.dto';
-import { mapProgramToDto } from './mappers/program.mapper';
+import { FilterProgramDto } from './dto/filter-program.dto';
 
 @Injectable()
 export class ProgramsService {
@@ -18,17 +17,15 @@ export class ProgramsService {
     private readonly programRepository: Repository<Program>,
   ) {}
 
-  async create(dto: ProgramDto): Promise<ProgramResponseDto> {
-    // Проверка уникальности названия
-    const existingProgram = await this.programRepository.findOne({
+  async create(dto: ProgramDto): Promise<Program> {
+    const existing = await this.programRepository.findOne({
       where: { name: dto.name },
     });
 
-    if (existingProgram) {
+    if (existing) {
       throw new ConflictException('Программа с таким названием уже существует');
     }
 
-    // Валидация возрастного диапазона
     if (dto.minAge > dto.maxAge) {
       throw new BadRequestException(
         'Минимальный возраст не может быть больше максимального',
@@ -36,19 +33,17 @@ export class ProgramsService {
     }
 
     const program = this.programRepository.create(dto);
-    const savedProgram = await this.programRepository.save(program);
-    return mapProgramToDto(savedProgram);
+    return this.programRepository.save(program);
   }
 
-  async findAll(): Promise<ProgramResponseDto[]> {
-    const programs = await this.programRepository.find({
+  async findAll(): Promise<Program[]> {
+    return this.programRepository.find({
       order: { name: 'ASC' },
       relations: ['groups'],
     });
-    return programs.map(mapProgramToDto);
   }
 
-  async findById(id: number): Promise<ProgramResponseDto> {
+  async findById(id: number): Promise<Program> {
     const program = await this.programRepository.findOne({
       where: { id },
       relations: ['groups'],
@@ -57,33 +52,57 @@ export class ProgramsService {
     if (!program) {
       throw new NotFoundException('Программа не найдена');
     }
-    return mapProgramToDto(program);
+
+    return program;
   }
 
-  async findByName(name: string): Promise<ProgramResponseDto> {
+  async findByName(name: string): Promise<Program> {
     const program = await this.programRepository.findOne({
       where: { name },
       relations: ['groups'],
     });
 
     if (!program) {
-      throw new NotFoundException('Программа не найдена');
+      throw new NotFoundException('Программа с таким названием не найдена');
     }
-    return mapProgramToDto(program);
+
+    return program;
   }
 
-  async update(id: number, dto: ProgramDto): Promise<ProgramResponseDto> {
-    const program = await this.programRepository.findOne({ where: { id } });
+  async filterPrograms(filters: FilterProgramDto): Promise<Program[]> {
+    const where: FindOptionsWhere<Program> = {};
 
-    if (!program) {
-      throw new NotFoundException('Программа не найдена');
+    if (filters.minHours !== undefined && filters.maxHours !== undefined) {
+      where.durationHours = Between(filters.minHours, filters.maxHours);
+    } else if (filters.minHours !== undefined) {
+      where.durationHours = Between(filters.minHours, 9999);
+    } else if (filters.maxHours !== undefined) {
+      where.durationHours = Between(0, filters.maxHours);
     }
 
-    // Проверка уникальности имени (если имя изменилось)
+    if (filters.name) {
+      where.name = ILike(`%${filters.name}%`);
+    }
+
+    if (filters.isActive !== undefined) {
+      where.isActive = filters.isActive;
+    }
+
+    return this.programRepository.find({
+      where,
+      relations: ['groups'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  async update(id: number, dto: ProgramDto): Promise<Program> {
+    const program = await this.findById(id);
+
     if (dto.name !== program.name) {
       const existing = await this.programRepository.findOne({
         where: { name: dto.name },
       });
+
       if (existing) {
         throw new ConflictException(
           'Программа с таким названием уже существует',
@@ -91,52 +110,18 @@ export class ProgramsService {
       }
     }
 
-    // Валидация возраста
     if (dto.minAge > dto.maxAge) {
       throw new BadRequestException(
         'Минимальный возраст не может быть больше максимального',
       );
     }
 
-    // Полное обновление всех полей
-    Object.assign(program, {
-      name: dto.name,
-      description: dto.description,
-      duration_hours: dto.duration_hours,
-      minAge: dto.minAge,
-      maxAge: dto.maxAge,
-      is_active: dto.is_active,
-    });
-
-    const updatedProgram = await this.programRepository.save(program);
-    return mapProgramToDto(updatedProgram);
+    Object.assign(program, dto);
+    return this.programRepository.save(program);
   }
 
   async delete(id: number): Promise<void> {
-    const program = await this.programRepository.findOne({ where: { id } });
-
-    if (!program) {
-      throw new NotFoundException('Программа не найдена');
-    }
-
+    const program = await this.findById(id);
     await this.programRepository.remove(program);
-  }
-
-  async filterByDuration(
-    minHours?: number,
-    maxHours?: number,
-  ): Promise<ProgramResponseDto[]> {
-    const query = this.programRepository.createQueryBuilder('program');
-
-    if (minHours !== undefined) {
-      query.andWhere('program.duration_hours >= :minHours', { minHours });
-    }
-
-    if (maxHours !== undefined) {
-      query.andWhere('program.duration_hours <= :maxHours', { maxHours });
-    }
-
-    const programs = await query.getMany();
-    return programs.map(mapProgramToDto);
   }
 }

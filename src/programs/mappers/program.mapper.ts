@@ -7,15 +7,13 @@ export function mapProgramToDto(program: Program): ProgramResponseDto {
     name: program.name,
     description: program.description,
     duration_hours: program.duration_hours,
-    min_age: program.minAge,
-    max_age: program.maxAge,
+    min_age: program.min_age,
+    max_age: program.max_age,
     is_active: program.is_active,
-    groups_count: program.groups.length, // Убрана избыточная проверка
+    groups_count: program.groups?.length || 0,
   };
 }
 
-export function mapProgramsToListDto(
-  programs: Program[],
-): ProgramResponseDto[] {
+export function mapProgramsToListDto(programs: Program[]): ProgramResponseDto[] {
   return programs.map(mapProgramToDto);
 }
