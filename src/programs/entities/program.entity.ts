@@ -37,6 +37,22 @@ export class Program {
   duration_hours: number;
 
   @Column({
+    type: 'int',
+    name: 'min_age',
+    nullable: false,
+    default: 0,
+  })
+  minAge: number;
+
+  @Column({
+    type: 'int',
+    name: 'max_age',
+    nullable: false,
+    default: 0,
+  })
+  maxAge: number;
+
+  @Column({
     type: 'boolean',
     default: true,
   })

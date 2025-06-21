@@ -58,7 +58,7 @@ export class SchoolYearService {
   }
 
   async delete(id: number): Promise<DeleteResponseDto> {
-    const year = await this.findById(id);
+    const year = await this.schoolYearRepository.findOneBy({ id });
 
     if (!year) {
       throw new NotFoundException(`Учебный год  не найден`);

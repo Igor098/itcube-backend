@@ -14,7 +14,6 @@ import {
 import { SchoolYearService } from './school_years.service';
 import { SchoolYearDto } from './dto/school-year.dto';
 import { Authorization } from '@/auth/decorators/auth.decorator';
-
 import {
   mapSchoolYearsToListDto,
   mapSchoolYearToDto,
@@ -36,8 +35,8 @@ export class SchoolYearController {
   }
 
   @Authorization(RoleName.ADMIN)
-  @HttpCode(HttpStatus.OK)
   @Get('by-period')
+  @HttpCode(HttpStatus.OK)
   public async findByPeriod(
     @Query('period') period: string,
   ): Promise<SchoolYearResponseDto> {
@@ -46,8 +45,8 @@ export class SchoolYearController {
   }
 
   @Authorization(RoleName.ADMIN)
-  @HttpCode(HttpStatus.OK)
   @Get('by-id/:id')
+  @HttpCode(HttpStatus.OK)
   public async findById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<SchoolYearResponseDto> {
@@ -55,8 +54,8 @@ export class SchoolYearController {
     return mapSchoolYearToDto(year);
   }
   @Authorization(RoleName.ADMIN)
-  @HttpCode(HttpStatus.CREATED)
   @Post('create')
+  @HttpCode(HttpStatus.CREATED)
   public async create(
     @Body() dto: SchoolYearDto,
   ): Promise<SchoolYearResponseDto> {
@@ -65,8 +64,8 @@ export class SchoolYearController {
   }
 
   @Authorization(RoleName.ADMIN)
-  @HttpCode(HttpStatus.OK)
   @Put('update/:id')
+  @HttpCode(HttpStatus.OK)
   public async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: SchoolYearDto,
@@ -76,8 +75,8 @@ export class SchoolYearController {
   }
 
   @Authorization(RoleName.ADMIN)
-  @HttpCode(HttpStatus.OK)
   @Delete(':id')
+  @HttpCode(HttpStatus.OK)
   public async delete(
     @Param('id', ParseIntPipe) id: string,
   ): Promise<DeleteResponseDto> {
