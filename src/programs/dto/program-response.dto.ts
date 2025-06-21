@@ -4,6 +4,5 @@ export class ProgramResponseDto {
   description: string | null;
   duration_hours: number;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  groups_count: number;
 }
