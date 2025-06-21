@@ -63,6 +63,10 @@ export class Program {
   @OneToMany(() => Group, (group) => group.program)
   groups: Group[];
 
+  public get groupsCount(): number {
+    return this.groups.length;
+  }
+
   @CreateDateColumn({
     type: 'timestamp',
     name: 'created_at',
