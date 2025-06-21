@@ -6,7 +6,7 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { addTransactionalDataSource } from 'typeorm-transactional';
-import { ProgramsModule } from './programs/programs.module';
+import { ProgramModule } from './programs/programs.module';
 import { GroupsModule } from './groups/groups.module';
 import { SchoolYearsModule } from './school_years/school_years.module';
 import { EmployeesModule } from './employees/employees.module';
@@ -40,7 +40,7 @@ import { TokensModule } from './tokens/tokens.module';
         return transactionalDataSource.options;
       },
     }),
-    ProgramsModule,
+    ProgramModule,
     GroupsModule,
     SchoolYearsModule,
     EmployeesModule,

@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ProgramsService } from './programs.service';
-import { ProgramsController } from './programs.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Program } from './entities/program.entity';
+import { ProgramService } from './programs.service';
+import { ProgramController } from './programs.controller';
 
 @Module({
-  controllers: [ProgramsController],
-  providers: [ProgramsService],
+  imports: [TypeOrmModule.forFeature([Program])],
+  providers: [ProgramService],
+  controllers: [ProgramController],
+  exports: [ProgramService],
 })
-export class ProgramsModule {}
+export class ProgramModule {}
