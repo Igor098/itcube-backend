@@ -47,7 +47,12 @@ export class SchoolYearService {
   }
 
   async update(id: number, schoolYear: SchoolYearDto): Promise<SchoolYear> {
-    const yearToUpdate = await this.findById(id);
+    const yearToUpdate = await this.schoolYearRepository.findOneBy({ id });
+
+    if (!yearToUpdate) {
+      throw new NotFoundException(`Учебный год  не найден`);
+    }
+
     Object.assign(yearToUpdate, schoolYear);
     return await this.schoolYearRepository.save(yearToUpdate);
   }

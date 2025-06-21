@@ -47,7 +47,12 @@ export class StudentsService {
   }
 
   public async update(id: number, student: StudentDto): Promise<Student> {
-    const studentToUpdate = await this.findById(id);
+    const studentToUpdate = await this.studentRepository.findOneBy({ id });
+
+    if (!studentToUpdate) {
+      throw new NotFoundException('Студент не найден!');
+    }
+
     Object.assign(studentToUpdate, student);
     return await this.studentRepository.save(studentToUpdate);
   }

@@ -15,9 +15,7 @@ export class UsersService {
     const user = await this.userRepository.findOne({
       where: { id },
       relations: {
-        userRoles: {
-          role: true,
-        },
+        userRoles: true,
         accounts: true,
       },
     });
@@ -32,9 +30,7 @@ export class UsersService {
     const user = await this.userRepository.findOne({
       where: { email },
       relations: {
-        userRoles: {
-          role: true,
-        },
+        userRoles: true,
         accounts: true,
       },
     });

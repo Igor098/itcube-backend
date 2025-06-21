@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { Observable } from 'rxjs';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -14,7 +15,7 @@ export class RoleGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const roles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+    const roles = this.reflector.getAllAndOverride<RoleName[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -31,9 +32,9 @@ export class RoleGuard implements CanActivate {
       );
     }
 
-    const userRoleNames = user.userRoles.map((userRole) => userRole.role.name);
+    const userRoleNames = user.userRoles.map((userRole) => userRole.role);
 
-    const hasRole = roles.some((role: string): boolean =>
+    const hasRole = roles.some((role: RoleName): boolean =>
       userRoleNames.includes(role),
     );
 

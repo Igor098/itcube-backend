@@ -18,12 +18,13 @@ import {
 } from './mappers/student.mapper';
 import { StudentDto } from './dto/student.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 
 @Controller('students')
 export class StudentsController {
   constructor(private readonly studentsService: StudentsService) {}
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('all')
   @HttpCode(HttpStatus.OK)
   public async findAll(): Promise<StudentResponseDto[]> {
@@ -32,7 +33,7 @@ export class StudentsController {
     return mapStudentsToListDto(students);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('by-id/:id')
   @HttpCode(HttpStatus.OK)
   public async findById(@Param('id') id: string): Promise<StudentResponseDto> {
@@ -40,7 +41,7 @@ export class StudentsController {
     return mapStudentToDto(student);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   public async create(
@@ -50,7 +51,7 @@ export class StudentsController {
     return mapStudentToDto(newStudent);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Put('update/:id')
   @HttpCode(HttpStatus.OK)
   public async update(
@@ -61,7 +62,7 @@ export class StudentsController {
     return mapStudentToDto(updatedStudent);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Delete('delete/:id')
   @HttpCode(HttpStatus.OK)
   public async delete(@Param('id') id: string): Promise<DeleteResponseDto> {
