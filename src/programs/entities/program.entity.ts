@@ -32,9 +32,10 @@ export class Program {
 
   @Column({
     type: 'int',
+    name: 'duration_hours',
     nullable: false,
   })
-  duration_hours: number;
+  durationHours: number;
 
   @Column({
     type: 'int',
@@ -54,9 +55,10 @@ export class Program {
 
   @Column({
     type: 'boolean',
+    name: 'is_active',
     default: true,
   })
-  is_active: boolean;
+  isActive: boolean;
 
   @OneToMany(() => Group, (group) => group.program)
   groups: Group[];
