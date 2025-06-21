@@ -45,6 +45,30 @@ export class AttendanceRecordsService {
     return record;
   }
 
+  public async findByTeacher(teacherId: number): Promise<AttendanceRecord[]> {
+    return await this.attendanceRecordRepository
+      .createQueryBuilder('attendanceRecords')
+      .leftJoinAndSelect('attendanceRecords.student', 'student')
+      .leftJoinAndSelect('attendanceRecords.session', 'session')
+      .leftJoinAndSelect('session.group', 'group')
+      .where('group.teacherId = :teacherId', { teacherId })
+      .getMany();
+  }
+
+  public findByTeacherAndGroup(
+    teacherId: number,
+    groupId: number,
+  ): Promise<AttendanceRecord[]> {
+    return this.attendanceRecordRepository
+      .createQueryBuilder('attendanceRecords')
+      .leftJoinAndSelect('attendanceRecords.student', 'student')
+      .leftJoinAndSelect('attendanceRecords.session', 'session')
+      .leftJoinAndSelect('session.group', 'group')
+      .where('group.teacherId = :teacherId', { teacherId })
+      .andWhere('group.id = :groupId', { groupId })
+      .getMany();
+  }
+
   public async createMany(
     records: AttendanceRecord[],
   ): Promise<AttendanceRecord[]> {
