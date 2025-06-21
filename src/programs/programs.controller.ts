@@ -5,37 +5,60 @@ import {
   Body,
   Param,
   Delete,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Put,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
-import { ProgramService } from './programs.service';
+import { ProgramsService } from './programs.service';
 import { ProgramDto } from './dto/program.dto';
-import { Program } from './entities/program.entity';
+import { ProgramResponseDto } from './dto/program-response.dto';
 
 @Controller('programs')
+@UsePipes(new ValidationPipe({ transform: true }))
 export class ProgramController {
-  constructor(private readonly programService: ProgramService) {}
+  constructor(private readonly programService: ProgramsService) {}
 
-  @Post('create')
+  @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: ProgramDto): Promise<Program> {
+  async create(@Body() dto: ProgramDto): Promise<ProgramResponseDto> {
     return this.programService.create(dto);
   }
 
-  @Get('all')
-  async findAll(): Promise<Program[]> {
+  @Get()
+  async findAll(): Promise<ProgramResponseDto[]> {
     return this.programService.findAll();
   }
 
-  @Get('by-id/:id')
-  async findById(@Param('id', ParseIntPipe) id: number): Promise<Program> {
+  @Get(':id')
+  async findById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<ProgramResponseDto> {
     return this.programService.findById(id);
   }
 
-  @Get('by-name/:name')
-  async findByName(@Param('name') name: string): Promise<Program> {
+  @Get('search/by-name')
+  async findByName(@Query('name') name: string): Promise<ProgramResponseDto> {
     return this.programService.findByName(name);
+  }
+
+  @Get('filter/by-duration')
+  async filterByDuration(
+    @Query('minHours', new ParseIntPipe({ optional: true })) minHours?: number,
+    @Query('maxHours', new ParseIntPipe({ optional: true })) maxHours?: number,
+  ): Promise<ProgramResponseDto[]> {
+    return this.programService.filterByDuration(minHours, maxHours);
+  }
+
+  @Put(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ProgramDto,
+  ): Promise<ProgramResponseDto> {
+    return this.programService.update(id, dto);
   }
 
   @Delete(':id')
