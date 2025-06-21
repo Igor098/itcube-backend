@@ -84,10 +84,19 @@ export class EmployeesService {
   }
 
   public async update(id: number, employee: EmployeeDto): Promise<Employee> {
-    const employeeToUpdate = await this.findById(id);
+    const employeeToUpdate = await this.employeeRepository.findOneBy({
+      id,
+    });
+
+    if (!employeeToUpdate) {
+      throw new NotFoundException('Сотрудник не найден!');
+    }
+
     Object.assign(employeeToUpdate, employee);
 
-    return await this.employeeRepository.save(employeeToUpdate);
+    const updated = await this.employeeRepository.save(employeeToUpdate);
+
+    return await this.findById(updated.id);
   }
 
   public async delete(id: number): Promise<DeleteResponseDto> {

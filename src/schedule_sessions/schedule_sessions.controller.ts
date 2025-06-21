@@ -20,8 +20,8 @@ import { ScheduleSessionResponseDto } from './dto/schedule-session-response.dto'
 import { Authorization } from '@/auth/decorators/auth.decorator';
 import { ScheduleSessionDto } from './dto/schedule-session.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
-import { Authorized } from '@/auth/decorators/authorized.decorator';
 import { ScheduleFilterDto } from './dto/schedule-session-filter.dto';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 
 @Controller('schedule-sessions')
 export class ScheduleSessionsController {
@@ -29,7 +29,7 @@ export class ScheduleSessionsController {
     private readonly scheduleSessionsService: ScheduleSessionsService,
   ) {}
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('all')
   @HttpCode(HttpStatus.OK)
   public async findAll(): Promise<ScheduleSessionResponseDto[]> {
@@ -37,7 +37,7 @@ export class ScheduleSessionsController {
     return mapScheduleSessionsListToDto(sessions);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('by-id/:id')
   @HttpCode(HttpStatus.OK)
   public async findById(
@@ -47,7 +47,7 @@ export class ScheduleSessionsController {
     return mapScheduleSessionToDto(session);
   }
 
-  @Authorization('admin', 'teacher')
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
   @Get('by-teacher/:teacherId')
   @HttpCode(HttpStatus.OK)
   public async getManyByTeacher(
@@ -58,7 +58,7 @@ export class ScheduleSessionsController {
     return mapScheduleSessionsListToDto(sessions);
   }
 
-  @Authorization('admin', 'teacher')
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
   @Get('by-filtered/teacher/:teacherId')
   @HttpCode(HttpStatus.OK)
   public async getManyByTeacherAndFilter(
@@ -75,7 +75,7 @@ export class ScheduleSessionsController {
     return mapScheduleSessionsListToDto(sessions);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('by-filtered')
   @HttpCode(HttpStatus.OK)
   public async findManyByFilter(
@@ -89,7 +89,18 @@ export class ScheduleSessionsController {
     return mapScheduleSessionsListToDto(sessions);
   }
 
-  @Authorization('admin', 'teacher')
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
+  @Get('nearest-by-teacher/:teacherId')
+  @HttpCode(HttpStatus.OK)
+  public async findNearestByTeacher(
+    teacherId: number,
+  ): Promise<ScheduleSessionResponseDto[]> {
+    const sessions =
+      await this.scheduleSessionsService.findNearestByTeacher(teacherId);
+    return mapScheduleSessionsListToDto(sessions);
+  }
+
+  @Authorization(RoleName.ADMIN)
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   public async create(
@@ -99,32 +110,64 @@ export class ScheduleSessionsController {
     return mapScheduleSessionToDto(session);
   }
 
-  @Authorization('admin', 'teacher')
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
+  @Post('teacher-create')
+  @HttpCode(HttpStatus.CREATED)
+  public async teacherCreate(
+    @Query('teacherId') teacherId: number,
+    @Body() scheduleSession: ScheduleSessionDto,
+  ): Promise<ScheduleSessionResponseDto> {
+    const session = await this.scheduleSessionsService.teacherCreate(
+      teacherId,
+      scheduleSession,
+    );
+    return mapScheduleSessionToDto(session);
+  }
+
+  @Authorization(RoleName.ADMIN)
   @Put('update/:id')
   @HttpCode(HttpStatus.OK)
   public async update(
-    @Authorized('id') userId: number,
-    @Authorized('userRoles') userRoles: string[],
     @Param('id') id: number,
     scheduleSession: ScheduleSessionDto,
   ): Promise<ScheduleSessionResponseDto> {
     const updatedSession = await this.scheduleSessionsService.update(
       id,
       scheduleSession,
-      userId,
-      userRoles,
     );
     return mapScheduleSessionToDto(updatedSession);
   }
 
-  @Authorization('admin', 'teacher')
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
+  @Put('teacher-update/:id')
+  @HttpCode(HttpStatus.OK)
+  public async teacherUpdate(
+    @Param('id') id: number,
+    @Query('teacherId') teacherId: number,
+    scheduleSession: ScheduleSessionDto,
+  ): Promise<ScheduleSessionResponseDto> {
+    const updatedSession = await this.scheduleSessionsService.teacherUpdate(
+      id,
+      teacherId,
+      scheduleSession,
+    );
+    return mapScheduleSessionToDto(updatedSession);
+  }
+
+  @Authorization(RoleName.ADMIN)
   @Delete('delete/:id')
   @HttpCode(HttpStatus.OK)
-  public async delete(
-    @Authorized('id') userId: number,
-    @Authorized('userRoles') userRoles: string[],
+  public async delete(@Param('id') id: number): Promise<DeleteResponseDto> {
+    return await this.scheduleSessionsService.delete(id);
+  }
+
+  @Authorization(RoleName.ADMIN, RoleName.TEACHER)
+  @Delete('delete/:id')
+  @HttpCode(HttpStatus.OK)
+  public async teacherDelete(
     @Param('id') id: number,
+    @Query('teacherId') teacherId: number,
   ): Promise<DeleteResponseDto> {
-    return await this.scheduleSessionsService.delete(id, userId, userRoles);
+    return await this.scheduleSessionsService.teacherDelete(id, teacherId);
   }
 }

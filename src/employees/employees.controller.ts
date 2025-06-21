@@ -19,12 +19,13 @@ import { EmployeeResponseDto } from './dto/employee-response.dto';
 import { Authorization } from '@/auth/decorators/auth.decorator';
 import { EmployeeDto } from './dto/employee.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 
 @Controller('employees')
 export class EmployeesController {
   constructor(private readonly employeesService: EmployeesService) {}
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('all')
   @HttpCode(HttpStatus.OK)
   async findAll(): Promise<EmployeeResponseDto[]> {
@@ -33,7 +34,7 @@ export class EmployeesController {
     return mapEmployeesToListDto(employees);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('by-id/:id')
   @HttpCode(HttpStatus.OK)
   async findById(@Param('id') id: number): Promise<EmployeeResponseDto> {
@@ -42,7 +43,7 @@ export class EmployeesController {
     return mapEmployeeToDto(employee);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Get('by-name')
   @HttpCode(HttpStatus.OK)
   async findByName(
@@ -52,7 +53,7 @@ export class EmployeesController {
     return mapEmployeeToDto(employee);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() employee: EmployeeDto): Promise<EmployeeResponseDto> {
@@ -61,7 +62,7 @@ export class EmployeesController {
     return mapEmployeeToDto(newEmployee);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Put('update/:id')
   @HttpCode(HttpStatus.OK)
   async update(
@@ -72,7 +73,7 @@ export class EmployeesController {
     return mapEmployeeToDto(updatedEmployee);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @Delete('delete/:id')
   @HttpCode(HttpStatus.OK)
   async delete(@Param('id') id: number): Promise<DeleteResponseDto> {

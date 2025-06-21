@@ -21,12 +21,13 @@ import {
 } from '@/school_years/mappers/school-year.mapper';
 import { SchoolYearResponseDto } from '@/school_years/dto/school-year-response.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 
 @Controller('school-years')
 export class SchoolYearController {
   constructor(private readonly schoolYearService: SchoolYearService) {}
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @HttpCode(HttpStatus.OK)
   @Get('all')
   public async findAll(): Promise<SchoolYearResponseDto[]> {
@@ -34,7 +35,7 @@ export class SchoolYearController {
     return mapSchoolYearsToListDto(years);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @HttpCode(HttpStatus.OK)
   @Get('by-period')
   public async findByPeriod(
@@ -44,7 +45,7 @@ export class SchoolYearController {
     return mapSchoolYearToDto(year);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @HttpCode(HttpStatus.OK)
   @Get('by-id/:id')
   public async findById(
@@ -53,7 +54,7 @@ export class SchoolYearController {
     const year = await this.schoolYearService.findById(id);
     return mapSchoolYearToDto(year);
   }
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @HttpCode(HttpStatus.CREATED)
   @Post('create')
   public async create(
@@ -63,7 +64,7 @@ export class SchoolYearController {
     return mapSchoolYearToDto(year);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @HttpCode(HttpStatus.OK)
   @Put('update/:id')
   public async update(
@@ -74,7 +75,7 @@ export class SchoolYearController {
     return mapSchoolYearToDto(year);
   }
 
-  @Authorization('admin')
+  @Authorization(RoleName.ADMIN)
   @HttpCode(HttpStatus.OK)
   @Delete(':id')
   public async delete(

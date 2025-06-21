@@ -1,16 +1,16 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ScheduleSession } from './entities/schedule_session.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Between, Brackets, Repository } from 'typeorm';
 import { ScheduleSessionDto } from './dto/schedule-session.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
-import { User } from '@/users/entities/user.entity';
 import { ScheduleFilterDto } from './dto/schedule-session-filter.dto';
+import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { checkTeacherGroups } from './utils/check-teacher-group.util';
 
 @Injectable()
 export class ScheduleSessionsService {
@@ -18,8 +18,8 @@ export class ScheduleSessionsService {
     @InjectRepository(ScheduleSession)
     private readonly scheduleSessionRepository: Repository<ScheduleSession>,
 
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(TeacherDetail)
+    private readonly teacherDetailRepository: Repository<TeacherDetail>,
   ) {}
 
   public async findAll(): Promise<ScheduleSession[]> {
@@ -30,7 +30,7 @@ export class ScheduleSessionsService {
       .leftJoinAndSelect('group.teacher', 'teacher')
       .leftJoinAndSelect('teacher.employee', 'employee')
       .getMany();
-    console.log(scheduleSessions);
+
     return scheduleSessions;
   }
 
@@ -148,15 +148,56 @@ export class ScheduleSessionsService {
     return query.getMany();
   }
 
+  public async findNearestByTeacher(
+    teacherId: number,
+  ): Promise<ScheduleSession[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // начало дня
+
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999); // конец завтрашнего дня
+
+    const sessions = await this.scheduleSessionRepository.find({
+      where: {
+        group: {
+          teacherId: teacherId,
+        },
+        lessonDate: Between(today, tomorrow),
+      },
+      relations: {
+        group: {
+          teacher: {
+            employee: true,
+          },
+        },
+        classroom: true,
+      },
+      order: {
+        lessonDate: 'ASC',
+      },
+    });
+
+    return sessions;
+  }
+
   public async create(
     scheduleSession: ScheduleSessionDto,
   ): Promise<ScheduleSession> {
-    const isExists = await this.scheduleSessionRepository.findOneBy({
-      topic: scheduleSession.topic,
-      classroomId: scheduleSession.classroomId,
-      startTime: scheduleSession.startTime,
-      endTime: scheduleSession.endTime,
-    });
+    const isExists = await this.scheduleSessionRepository
+      .createQueryBuilder('session')
+      .where('session.groupId = :groupId', { groupId: scheduleSession.groupId })
+      .andWhere('session.topic = :topic', { topic: scheduleSession.topic })
+      .andWhere('session.lessonDate = :lessonDate', {
+        lessonDate: scheduleSession.lessonDate,
+      })
+      .andWhere('session.startTime = :startTime', {
+        startTime: scheduleSession.startTime,
+      })
+      .andWhere('session.endTime = :endTime', {
+        endTime: scheduleSession.endTime,
+      })
+      .getOne();
 
     if (isExists) {
       throw new ConflictException('Занятие уже существует!');
@@ -168,26 +209,28 @@ export class ScheduleSessionsService {
     return await this.findById(newSession.id);
   }
 
+  public async teacherCreate(
+    teacherId: number,
+    scheduleSession: ScheduleSessionDto,
+  ): Promise<ScheduleSession> {
+    await checkTeacherGroups(
+      this.teacherDetailRepository,
+      teacherId,
+      scheduleSession.groupId,
+    );
+
+    return await this.create(scheduleSession);
+  }
+
   public async update(
     id: number,
     scheduleSession: ScheduleSessionDto,
-    userId: number,
-    userRoles: string[],
   ): Promise<ScheduleSession> {
-    const scheduleSessionToUpdate = await this.findById(id);
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.employee', 'employee')
-      .leftJoinAndSelect('employee.teacherDetail', 'teacherDetail')
-      .where('user.id = :userId', { userId })
-      .getOne();
+    const scheduleSessionToUpdate =
+      await this.scheduleSessionRepository.findOneBy({ id });
 
-    if (
-      user?.employee?.teacherDetail?.id !==
-        scheduleSessionToUpdate.group.teacher.id &&
-      !userRoles.includes('admin')
-    ) {
-      throw new ForbiddenException('Вы не можете изменить это занятие!');
+    if (!scheduleSessionToUpdate) {
+      throw new NotFoundException('Занятие не найдено!');
     }
 
     Object.assign(scheduleSessionToUpdate, scheduleSession);
@@ -199,30 +242,35 @@ export class ScheduleSessionsService {
     return await this.findById(updatedSession.id);
   }
 
-  public async delete(
+  public async teacherUpdate(
     id: number,
-    userId: number,
-    userRoles: string[],
-  ): Promise<DeleteResponseDto> {
-    const scheduleSessionToDelete = await this.findById(id);
-    const user = await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.employee', 'employee')
-      .leftJoinAndSelect('employee.teacherDetail', 'teacherDetail')
-      .where('user.id = :userId', { userId })
-      .getOne();
+    teacherId: number,
+    scheduleSession: ScheduleSessionDto,
+  ): Promise<ScheduleSession> {
+    await checkTeacherGroups(
+      this.teacherDetailRepository,
+      teacherId,
+      scheduleSession.groupId,
+    );
 
-    if (
-      user?.employee?.teacherDetail?.id !==
-        scheduleSessionToDelete.group.teacher.id &&
-      !userRoles.includes('admin')
-    ) {
-      throw new ForbiddenException('Вы не можете удалить это занятие!');
-    }
+    return await this.update(id, scheduleSession);
+  }
+
+  public async delete(id: number): Promise<DeleteResponseDto> {
+    const scheduleSessionToDelete = await this.findById(id);
 
     const s_id = scheduleSessionToDelete.id;
     await this.scheduleSessionRepository.remove(scheduleSessionToDelete);
 
     return { isDeleted: true, id: s_id };
+  }
+
+  public async teacherDelete(
+    id: number,
+    teacherId: number,
+  ): Promise<DeleteResponseDto> {
+    await checkTeacherGroups(this.teacherDetailRepository, teacherId, id);
+
+    return await this.delete(id);
   }
 }

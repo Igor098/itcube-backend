@@ -14,7 +14,7 @@ export class GroupDto {
 
   @IsBoolean({ message: 'Статус группы должен быть логическим значением' })
   @IsOptional()
-  isActive: boolean;
+  isActive?: boolean;
 
   @IsInt({ message: 'Программа обучения должна быть целым числом' })
   @IsPositive({

@@ -12,6 +12,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+export enum GroupStudentStatus {
+  STUDYING = 'обучается',
+  COMPLETED = 'закончил обучение',
+  EXPELLED = 'отчислен',
+}
+
 @Entity({ name: 'group_students' })
 @Unique('uq_group_student', ['groupId', 'studentId'])
 export class GroupStudent {
@@ -35,10 +41,32 @@ export class GroupStudent {
   graduationDate?: Date;
 
   @Column({
+    type: 'enum',
+    enum: GroupStudentStatus,
+    nullable: false,
+    default: GroupStudentStatus.STUDYING,
+  })
+  status: GroupStudentStatus;
+
+  @Column({
     type: 'boolean',
     default: false,
   })
   isExpelled: boolean;
+
+  @Column({
+    type: 'boolean',
+    name: 'is_cerificate_issued',
+    default: false,
+  })
+  isCerificateIssued: boolean;
+
+  @Column({
+    type: 'varchar',
+    name: 'certificate_number',
+    nullable: true,
+  })
+  certificateNumber?: string;
 
   @Column({
     type: 'int',
