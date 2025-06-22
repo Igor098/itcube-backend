@@ -10,6 +10,7 @@ export class EmployeeResponseDto {
     id: number;
     email: string;
   };
+  roles?: string[];
   hireDate: string;
   education?: string;
 }

@@ -9,6 +9,8 @@ import { Employee } from './entities/employee.entity';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 import { EmployeeDto } from './dto/employee.dto';
 import { User } from '@/users/entities/user.entity';
+import { UserRolesService } from '@/user_roles/user_roles.service';
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 
 @Injectable()
 export class EmployeesService {
@@ -17,13 +19,17 @@ export class EmployeesService {
     private readonly employeeRepository: Repository<Employee>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly userRolesService: UserRolesService,
   ) {}
 
   public async findAll(): Promise<Employee[]> {
     return await this.employeeRepository.find({
       relations: {
         position: true,
-        user: true,
+        user: {
+          userRoles: true,
+        },
       },
     });
   }
@@ -33,7 +39,9 @@ export class EmployeesService {
       where: { id },
       relations: {
         position: true,
-        user: true,
+        user: {
+          userRoles: true,
+        },
       },
     });
 
@@ -49,7 +57,9 @@ export class EmployeesService {
       where: { fullName },
       relations: {
         position: true,
-        user: true,
+        user: {
+          userRoles: true,
+        },
       },
     });
 
@@ -77,8 +87,16 @@ export class EmployeesService {
         'Не найден аккаунт пользователя на сайте. Для добавления сотрудника он должен быть зарегистрирован!',
       );
     }
+    console.log('data:', employee);
 
     const newEmployee = await this.employeeRepository.save(employee);
+
+    console.log('newEmployee:', newEmployee);
+
+    await this.userRolesService.create({
+      userId: newEmployee.userId,
+      role: employee.role ?? RoleName.USER,
+    });
 
     return this.findById(newEmployee.id);
   }
@@ -96,6 +114,11 @@ export class EmployeesService {
 
     const updated = await this.employeeRepository.save(employeeToUpdate);
 
+    await this.userRolesService.create({
+      userId: updated.userId,
+      role: employee.role ?? RoleName.USER,
+    });
+
     return await this.findById(updated.id);
   }
 
@@ -103,6 +126,8 @@ export class EmployeesService {
     const employee = await this.findById(id);
     const e_id = employee.id;
     await this.employeeRepository.remove(employee);
+
+    await this.userRolesService.delete(employee.userId);
 
     return { isDeleted: true, id: e_id };
   }

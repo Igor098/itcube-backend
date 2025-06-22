@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserRole } from './entities/user_role.entity';
 import { Repository } from 'typeorm';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
+import { UserRoleDto } from './dto/user-role.dto';
 
 @Injectable()
 export class UserRolesService {
@@ -20,7 +21,7 @@ export class UserRolesService {
   }
 
   public async findById(userId: number): Promise<UserRole> {
-    const role = await this.userRolesRepository.findOneBy({ user_id: userId });
+    const role = await this.userRolesRepository.findOneBy({ userId: userId });
 
     if (!role) {
       throw new NotFoundException('Роль не найдена!');
@@ -29,9 +30,9 @@ export class UserRolesService {
     return role;
   }
 
-  public async create(userRole: UserRole): Promise<UserRole> {
+  public async create(userRole: UserRoleDto): Promise<UserRole> {
     const isExists = await this.userRolesRepository.findOneBy({
-      user_id: userRole.user_id,
+      userId: userRole.userId,
       role: userRole.role,
     });
 
@@ -52,7 +53,7 @@ export class UserRolesService {
   public async delete(userId: number): Promise<DeleteResponseDto> {
     const role = await this.findById(userId);
 
-    const r_id = role.user_id;
+    const r_id = role.userId;
     await this.userRolesRepository.remove(role);
 
     return { isDeleted: true, id: r_id };

@@ -1,6 +1,8 @@
+import { RoleName } from '@/user_roles/entities/user_role.entity';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -28,6 +30,10 @@ export class EmployeeDto {
   @IsPositive({ message: 'Id аккаунта должно быть положительным числом' })
   @IsNotEmpty({ message: 'Аккаунт не может быть пустой' })
   userId: number;
+
+  @IsEnum(RoleName, { message: 'Некорректная роль сотрудника' })
+  @IsNotEmpty({ message: 'Роль сотрудника не может быть пустой' })
+  role?: RoleName;
 
   @Transform(({ value }) => parse(value, 'dd.MM.yyyy', new Date()))
   @IsDate({ message: 'Дата приема сотрудника должна быть корректной датой' })
