@@ -1,6 +1,6 @@
 export class AttendanceRecordResponseDto {
   id: number;
-  status: string;
+  status?: string;
   comment?: string;
   student: {
     id: number;

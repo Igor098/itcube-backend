@@ -9,6 +9,12 @@ import { In, Repository } from 'typeorm';
 import { AttendanceRecord } from './entities/attendance_record.entity';
 import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { checkTeacherGroups } from '@/libs/common/utils/check-teacher-group.util';
+import {
+  AttendanceRecordCreateDto,
+  AttendanceRecordUpdateDto,
+} from './dto/attendance-record.dto';
+import { ScheduleSession } from '@/schedule_sessions/entities/schedule_session.entity';
+import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 
 @Injectable()
 export class AttendanceRecordsService {
@@ -18,6 +24,9 @@ export class AttendanceRecordsService {
 
     @InjectRepository(TeacherDetail)
     private readonly teacherDetailRepository: Repository<TeacherDetail>,
+
+    @InjectRepository(ScheduleSession)
+    private readonly scheduleSessionRepository: Repository<ScheduleSession>,
   ) {}
 
   public async findAll(): Promise<AttendanceRecord[]> {
@@ -70,44 +79,64 @@ export class AttendanceRecordsService {
   }
 
   public async createMany(
-    records: AttendanceRecord[],
+    records: AttendanceRecordCreateDto[],
   ): Promise<AttendanceRecord[]> {
     const results: AttendanceRecord[] = [];
 
     for (const record of records) {
       const isExists = await this.attendanceRecordRepository.findOne({
-        where: { studentId: record.student.id, sessionId: record.session.id },
+        where: { studentId: record.studentId, sessionId: record.sessionId },
         relations: {
           student: true,
           session: true,
         },
       });
       if (!isExists) {
-        results.push(record);
+        const newRecord = this.attendanceRecordRepository.create(record);
+        results.push(newRecord);
       }
-
-      await this.attendanceRecordRepository.save(record);
     }
     if (!results.length) {
       throw new ConflictException('Все записи существуют!');
     }
 
-    return await this.attendanceRecordRepository.save(results);
+    const created = await this.attendanceRecordRepository.save(results);
+    const createdIds = created.map((r) => r.id);
+
+    return this.attendanceRecordRepository.find({
+      where: { id: In(createdIds) },
+      relations: {
+        student: true,
+        session: true,
+      },
+    });
   }
 
   public async teacherCreateMany(
     teacherId: number,
-    records: AttendanceRecord[],
+    records: AttendanceRecordCreateDto[],
   ): Promise<AttendanceRecord[]> {
     if (!records.length) {
       throw new BadRequestException('Список записей пустой!');
     }
 
-    const groupId = records[0].session.groupId;
+    const firstSession = await this.scheduleSessionRepository.findOne({
+      where: { id: records[0].sessionId },
+      relations: { group: true },
+    });
 
-    const isOneGroup = records.every(
-      (record) => record.session.groupId === groupId,
-    );
+    if (!firstSession) {
+      throw new BadRequestException('Сессия не найдена');
+    }
+
+    const groupId = firstSession.group.id;
+
+    const sessions = await this.scheduleSessionRepository.find({
+      where: { id: In(records.map((r) => r.sessionId)) },
+      relations: { group: true },
+    });
+
+    const isOneGroup = sessions.every((s) => s.group.id === groupId);
 
     if (!isOneGroup) {
       throw new BadRequestException('Все записи должны быть из одной группы!');
@@ -118,7 +147,7 @@ export class AttendanceRecordsService {
   }
 
   public async updateMany(
-    records: AttendanceRecord[],
+    records: AttendanceRecordUpdateDto[],
   ): Promise<AttendanceRecord[]> {
     const results: AttendanceRecord[] = [];
 
@@ -134,7 +163,7 @@ export class AttendanceRecordsService {
         continue;
       }
 
-      if (existRecord.sessionId !== record.session.id) {
+      if (existRecord.sessionId !== record.sessionId) {
         throw new ConflictException(
           'Нельзя обновлять записи из других занятий!',
         );
@@ -147,22 +176,43 @@ export class AttendanceRecordsService {
       throw new ConflictException('Такие записи не существуют!');
     }
 
-    return await this.attendanceRecordRepository.save(results);
+    const updated = await this.attendanceRecordRepository.save(results);
+    const updatedIds = updated.map((r) => r.id);
+
+    return this.attendanceRecordRepository.find({
+      where: { id: In(updatedIds) },
+      relations: {
+        student: true,
+        session: true,
+      },
+    });
   }
 
   public async teacherUpdateMany(
     teacherId: number,
-    records: AttendanceRecord[],
+    records: AttendanceRecordUpdateDto[],
   ): Promise<AttendanceRecord[]> {
     if (!records.length) {
       throw new BadRequestException('Список записей пустой!');
     }
 
-    const groupId = records[0].session.groupId;
+    const firstSession = await this.scheduleSessionRepository.findOne({
+      where: { id: records[0].sessionId },
+      relations: { group: true },
+    });
 
-    const isOneGroup = records.every(
-      (record) => record.session.groupId === groupId,
-    );
+    if (!firstSession) {
+      throw new BadRequestException('Сессия не найдена');
+    }
+
+    const groupId = firstSession.group.id;
+
+    const sessions = await this.scheduleSessionRepository.find({
+      where: { id: In(records.map((r) => r.sessionId)) },
+      relations: { group: true },
+    });
+
+    const isOneGroup = sessions.every((s) => s.group.id === groupId);
 
     if (!isOneGroup) {
       throw new BadRequestException('Все записи должны быть из одной группы!');
@@ -173,15 +223,13 @@ export class AttendanceRecordsService {
     return await this.updateMany(records);
   }
 
-  public async deleteMany(records: AttendanceRecord[]): Promise<void> {
+  public async deleteMany(records: number[]): Promise<DeleteResponseDto[]> {
     if (!records.length) {
       throw new BadRequestException('Список записей пустой!');
     }
 
-    const recordIds = records.map((r) => r.id);
-
     const existingRecords = await this.attendanceRecordRepository.find({
-      where: { id: In(recordIds) },
+      where: { id: In(records) },
     });
 
     if (existingRecords.length !== records.length) {
@@ -189,28 +237,7 @@ export class AttendanceRecordsService {
     }
 
     await this.attendanceRecordRepository.remove(existingRecords);
-  }
 
-  public async teacherDeleteMany(
-    teacherId: number,
-    records: AttendanceRecord[],
-  ): Promise<void> {
-    if (!records.length) {
-      throw new BadRequestException('Список записей пустой!');
-    }
-
-    const groupId = records[0].session.groupId;
-
-    const isOneGroup = records.every(
-      (record) => record.session.groupId === groupId,
-    );
-
-    if (!isOneGroup) {
-      throw new BadRequestException('Все записи должны быть из одной группы!');
-    }
-
-    await checkTeacherGroups(this.teacherDetailRepository, teacherId, groupId);
-
-    await this.deleteMany(records);
+    return existingRecords.map((r) => ({ isDeleted: true, id: r.id }));
   }
 }

@@ -15,6 +15,7 @@ export function mapEmployeeToDto(employee: Employee): EmployeeResponseDto {
       id: employee.user.id,
       email: employee.user.email,
     },
+    roles: employee.user.userRoles?.map((userRole) => userRole.role),
     hireDate: format(employee.hireDate, 'dd.MM.yyyy'),
     education: employee.education ?? 'Не указано',
   };

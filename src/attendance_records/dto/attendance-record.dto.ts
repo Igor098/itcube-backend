@@ -10,13 +10,13 @@ import {
 import { AttendanceStatus } from '../entities/attendance_record.entity';
 import { Type } from 'class-transformer';
 
-export class AttendanceRecordDto {
+export class AttendanceRecordCreateDto {
   @IsEnum(AttendanceStatus, {
     message:
       'Допустимые значения: "присутствовал", "отсутствовал", "опоздал", "не задано"',
   })
   @IsNotEmpty({ message: 'Статус не может быть пустым' })
-  status: string;
+  status: AttendanceStatus;
 
   @IsString({ message: 'Комментарий должен быть строкой' })
   @IsOptional()
@@ -33,8 +33,21 @@ export class AttendanceRecordDto {
   sessionId: number;
 }
 
-export class AttendanceRecordListDto {
+export class AttendanceRecordUpdateDto extends AttendanceRecordCreateDto {
+  @IsInt({ message: 'Id записи должно быть числом' })
+  @IsPositive({ message: 'Id записи должно быть положительным числом' })
+  @IsNotEmpty({ message: 'Id записи не может быть пустым' })
+  id: number;
+}
+
+export class AttendanceRecordCreateListDto {
   @ValidateNested({ each: true })
-  @Type(() => AttendanceRecordDto)
-  records: AttendanceRecordDto[];
+  @Type(() => AttendanceRecordCreateDto)
+  records: AttendanceRecordCreateDto[];
+}
+
+export class AttendanceRecordUpdateListDto {
+  @ValidateNested({ each: true })
+  @Type(() => AttendanceRecordUpdateDto)
+  records: AttendanceRecordUpdateDto[];
 }

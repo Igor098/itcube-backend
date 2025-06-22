@@ -11,6 +11,8 @@ import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 import { ScheduleFilterDto } from './dto/schedule-session-filter.dto';
 import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { checkTeacherGroups } from '@/libs/common/utils/check-teacher-group.util';
+import { AttendanceRecordsService } from '@/attendance_records/attendance_records.service';
+import { AttendanceStatus } from '@/attendance_records/entities/attendance_record.entity';
 
 @Injectable()
 export class ScheduleSessionsService {
@@ -20,6 +22,8 @@ export class ScheduleSessionsService {
 
     @InjectRepository(TeacherDetail)
     private readonly teacherDetailRepository: Repository<TeacherDetail>,
+
+    private readonly attendanceRecordsService: AttendanceRecordsService,
   ) {}
 
   public async findAll(): Promise<ScheduleSession[]> {
@@ -37,10 +41,15 @@ export class ScheduleSessionsService {
   public async findById(id: number): Promise<ScheduleSession> {
     const scheduleSession = await this.scheduleSessionRepository
       .createQueryBuilder('schedule_session')
+      .leftJoinAndSelect(
+        'schedule_session.attendanceRecords',
+        'attendanceRecord',
+      )
       .leftJoinAndSelect('schedule_session.classroom', 'classroom')
       .leftJoinAndSelect('schedule_session.group', 'group')
       .leftJoinAndSelect('group.teacher', 'teacher')
       .leftJoinAndSelect('teacher.employee', 'employee')
+      .leftJoinAndSelect('group.groupStudents', 'groupStudent')
       .where({ id })
       .getOne();
 
@@ -206,7 +215,19 @@ export class ScheduleSessionsService {
     const newSession =
       await this.scheduleSessionRepository.save(scheduleSession);
 
-    return await this.findById(newSession.id);
+    const session = await this.findById(newSession.id);
+
+    const studentsIds = session.group.groupStudents.map((gs) => gs.studentId);
+
+    const records = studentsIds.map((studentId) => ({
+      studentId,
+      sessionId: newSession.id,
+      status: AttendanceStatus.NOT_SET,
+    }));
+
+    await this.attendanceRecordsService.createMany(records);
+
+    return session;
   }
 
   public async teacherCreate(
@@ -259,7 +280,14 @@ export class ScheduleSessionsService {
   public async delete(id: number): Promise<DeleteResponseDto> {
     const scheduleSessionToDelete = await this.findById(id);
 
+    const recordsIds = scheduleSessionToDelete.attendanceRecords.map(
+      (r) => r.id,
+    );
+
+    await this.attendanceRecordsService.deleteMany(recordsIds);
+
     const s_id = scheduleSessionToDelete.id;
+
     await this.scheduleSessionRepository.remove(scheduleSessionToDelete);
 
     return { isDeleted: true, id: s_id };

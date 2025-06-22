@@ -21,8 +21,9 @@ export enum RoleName {
 export class UserRole {
   @PrimaryColumn({
     type: 'int',
+    name: 'user_id',
   })
-  user_id: number;
+  userId: number;
 
   @ManyToOne(() => User, (user) => user.userRoles)
   @JoinColumn({ name: 'user_id' })
