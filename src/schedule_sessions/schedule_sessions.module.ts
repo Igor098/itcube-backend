@@ -5,8 +5,8 @@ import { ScheduleSession } from './entities/schedule_session.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@/users/entities/user.entity';
 import { UsersService } from '@/users/users.service';
-import { TeacherDetailsService } from '@/teacher_details/teacher_details.service';
-import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { TeacherDetailsService } from '@/teacher_details/teacher-details.service';
+import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ScheduleSession, User, TeacherDetail])],

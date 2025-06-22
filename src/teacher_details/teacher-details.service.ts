@@ -5,8 +5,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TeacherDetail } from './entities/teacher_detail.entity';
+import { TeacherDetail } from './entities/teacher-detail.entity';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
+import { TeacherDetailDto } from '@/teacher_details/dto/teacher-detail.dto';
 
 @Injectable()
 export class TeacherDetailsService {
@@ -53,9 +54,11 @@ export class TeacherDetailsService {
     return teacherDetail;
   }
 
-  public async create(teacherDetail: TeacherDetail): Promise<TeacherDetail> {
+  public async create(
+    teacherDetailDto: TeacherDetailDto,
+  ): Promise<TeacherDetail> {
     const isExists = await this.teacherDetailRepository.findOneBy({
-      employeeId: teacherDetail.id,
+      employeeId: teacherDetailDto.employeeId,
     });
 
     if (isExists) {
@@ -63,14 +66,14 @@ export class TeacherDetailsService {
     }
 
     const newTeacherDetail =
-      await this.teacherDetailRepository.save(teacherDetail);
+      await this.teacherDetailRepository.save(teacherDetailDto);
 
     return await this.findById(newTeacherDetail.id);
   }
 
   public async update(
     id: number,
-    teacherDetail: TeacherDetail,
+    teacherDetail: TeacherDetailDto,
   ): Promise<TeacherDetail> {
     const teacherDetailToUpdate = await this.teacherDetailRepository.findOneBy({
       id,

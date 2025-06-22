@@ -9,7 +9,7 @@ import { Between, Brackets, Repository } from 'typeorm';
 import { ScheduleSessionDto } from './dto/schedule-session.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 import { ScheduleFilterDto } from './dto/schedule-session-filter.dto';
-import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { checkTeacherGroups } from '@/libs/common/utils/check-teacher-group.util';
 
 @Injectable()

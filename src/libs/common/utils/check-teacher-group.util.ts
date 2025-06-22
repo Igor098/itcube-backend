@@ -1,4 +1,4 @@
-import type { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import type { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
 

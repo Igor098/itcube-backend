@@ -7,7 +7,8 @@ import {
   Query,
   Put,
   Delete,
-  ParseIntPipe, HttpCode, HttpStatus,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
 import { ProgramDto } from './dto/program.dto';

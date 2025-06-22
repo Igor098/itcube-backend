@@ -1,5 +1,5 @@
 import { Position } from '@/positions/entities/position.entity';
-import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { User } from '@/users/entities/user.entity';
 import {
   Column,

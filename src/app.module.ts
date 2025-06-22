@@ -14,7 +14,7 @@ import { UserRolesModule } from './user_roles/user_roles.module';
 import { GroupStudentsModule } from './group_students/group_students.module';
 import { ScheduleSessionsModule } from './schedule_sessions/schedule_sessions.module';
 import { AttendanceRecordsModule } from './attendance_records/attendance_records.module';
-import { TeacherDetailsModule } from './teacher_details/teacher_details.module';
+import { TeacherDetailsModule } from './teacher_details/teacher-details.module';
 import { StudentsModule } from './students/students.module';
 import { ClassroomsModule } from './classrooms/classrooms.module';
 import { PositionModule } from './positions/positions.module';

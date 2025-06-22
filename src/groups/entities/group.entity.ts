@@ -2,7 +2,7 @@ import { GroupStudent } from '@/group_students/entities/group_student.entity';
 import { Program } from '@/programs/entities/program.entity';
 import { ScheduleSession } from '@/schedule_sessions/entities/schedule_session.entity';
 import { SchoolYear } from '@/school_years/entities/school_year.entity';
-import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 
 import {
   Column,

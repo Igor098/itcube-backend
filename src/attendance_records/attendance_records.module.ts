@@ -3,10 +3,10 @@ import { AttendanceRecordsService } from './attendance_records.service';
 import { AttendanceRecordsController } from './attendance_records.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@/users/entities/user.entity';
-import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { AttendanceRecord } from './entities/attendance_record.entity';
 import { UsersService } from '@/users/users.service';
-import { TeacherDetailsService } from '@/teacher_details/teacher_details.service';
+import { TeacherDetailsService } from '@/teacher_details/teacher-details.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([AttendanceRecord, User, TeacherDetail])],

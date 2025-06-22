@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { AttendanceRecord } from './entities/attendance_record.entity';
-import { TeacherDetail } from '@/teacher_details/entities/teacher_detail.entity';
+import { TeacherDetail } from '@/teacher_details/entities/teacher-detail.entity';
 import { checkTeacherGroups } from '@/libs/common/utils/check-teacher-group.util';
 
 @Injectable()
