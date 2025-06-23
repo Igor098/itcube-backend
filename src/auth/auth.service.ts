@@ -12,6 +12,8 @@ import { Request, Response } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { verify } from 'argon2';
 import { ConfigService } from '@nestjs/config';
+import { mapUserToDto } from '@/users/mappers/user.mapper';
+import { UserResponseDto } from '@/users/dto/user-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +22,10 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  public async register(req: Request, user: RegisterDto): Promise<User> {
+  public async register(
+    req: Request,
+    user: RegisterDto,
+  ): Promise<UserResponseDto> {
     const isExists = await this.usersService.findByEmail(user.email);
 
     if (isExists) {
@@ -38,7 +43,10 @@ export class AuthService {
     return await this.saveSession(req, newUser);
   }
 
-  public async login(req: Request, userDto: LoginDto): Promise<User> {
+  public async login(
+    req: Request,
+    userDto: LoginDto,
+  ): Promise<UserResponseDto> {
     const user = await this.usersService.findByEmail(userDto.email);
 
     if (!user || !user.password) {
@@ -75,7 +83,10 @@ export class AuthService {
     });
   }
 
-  private async saveSession(req: Request, newUser: User): Promise<User> {
+  private async saveSession(
+    req: Request,
+    newUser: User,
+  ): Promise<UserResponseDto> {
     return await new Promise((resolve, reject) => {
       req.session.userId = String(newUser.id);
 
@@ -88,7 +99,7 @@ export class AuthService {
           );
         }
 
-        resolve(newUser);
+        resolve(mapUserToDto(newUser));
       });
     });
   }

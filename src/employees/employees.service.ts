@@ -87,11 +87,8 @@ export class EmployeesService {
         'Не найден аккаунт пользователя на сайте. Для добавления сотрудника он должен быть зарегистрирован!',
       );
     }
-    console.log('data:', employee);
 
     const newEmployee = await this.employeeRepository.save(employee);
-
-    console.log('newEmployee:', newEmployee);
 
     await this.userRolesService.create({
       userId: newEmployee.userId,
