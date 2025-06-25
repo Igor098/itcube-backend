@@ -21,6 +21,7 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   public async register(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Body() user: RegisterDto,
   ): Promise<UserResponseDto> {
     return await this.authService.register(req, user);
@@ -30,6 +31,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   public async login(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Body() user: LoginDto,
   ): Promise<UserResponseDto> {
     return await this.authService.login(req, user);

@@ -1,13 +1,24 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { TeacherDetailsService } from '@/teacher_details/teacher-details.service';
 import { Authorization } from '@/auth/decorators/auth.decorator';
 import { RoleName } from '@/user_roles/entities/user_role.entity';
-import { mapTeacherDetailsToListDto, mapTeacherDetailToDto } from '@/teacher_details/mappers/teacher-details.mapper';
+import {
+  mapTeacherDetailsToListDto,
+  mapTeacherDetailToDto,
+} from '@/teacher_details/mappers/teacher-details.mapper';
 import { TeacherDetailDto } from '@/teacher_details/dto/teacher-detail.dto';
 import { TeacherDetailResponseDto } from '@/teacher_details/dto/teacher-detail-response.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
-
-
 
 @Controller('teacher-details')
 export class TeacherDetailsController {
