@@ -55,7 +55,7 @@ export class GroupsService {
     }
 
     if (Boolean(q)) {
-      query.andWhere('name ILIKE :q', { q: `%${q}%` });
+      query.andWhere('group.name ILIKE :q', { q: `%${q}%` });
     }
 
     return await query.getMany();
@@ -73,7 +73,7 @@ export class GroupsService {
     }
 
     if (Boolean(q)) {
-      query.andWhere('name ILIKE :q', { q: `%${q}%` });
+      query.andWhere('group.name ILIKE :q', { q: `%${q}%` });
     }
 
     return await query.getMany();
