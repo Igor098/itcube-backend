@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { StudentsService } from './students.service';
 import { StudentResponseDto } from './dto/student-response.dto';
@@ -19,6 +20,7 @@ import {
 import { StudentDto } from './dto/student.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 import { RoleName } from '@/user_roles/entities/user_role.entity';
+import { StudentFilterDto } from './dto/student-filter.dto';
 
 @Controller('students')
 export class StudentsController {
@@ -39,6 +41,17 @@ export class StudentsController {
   public async findById(@Param('id') id: string): Promise<StudentResponseDto> {
     const student = await this.studentsService.findById(+id);
     return mapStudentToDto(student);
+  }
+
+  @Authorization(RoleName.ADMIN)
+  @Get('filter')
+  @HttpCode(HttpStatus.OK)
+  public async filter(
+    @Query() filter: StudentFilterDto,
+    @Query('q') q: string,
+  ): Promise<StudentResponseDto[]> {
+    const students = await this.studentsService.filter(filter, q);
+    return mapStudentsToListDto(students);
   }
 
   @Authorization(RoleName.ADMIN)

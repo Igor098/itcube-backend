@@ -9,7 +9,7 @@ import { ms, type StringValue } from './libs/common/utils/ms.util';
 import { parseBoolean } from './libs/common/utils/parse-boolean.util';
 import { RedisStore } from 'connect-redis';
 import { createClient } from 'redis';
-import { NestExpressApplication } from "@nestjs/platform-express"
+import type { NestExpressApplication } from '@nestjs/platform-express';
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function bootstrap() {
@@ -41,12 +41,11 @@ async function bootstrap() {
       resave: true,
       saveUninitialized: false,
       cookie: {
-	domain: config.getOrThrow<string>('SESSION_DOMAIN'),
+        domain: config.getOrThrow<string>('SESSION_DOMAIN'),
         maxAge: ms(config.getOrThrow<StringValue>('SESSION_MAX_AGE')),
         secure: parseBoolean(config.getOrThrow<string>('SESSION_SECURE')),
         httpOnly: parseBoolean(config.getOrThrow<string>('SESSION_HTTP_ONLY')),
         sameSite: 'lax',
-
       },
       store: new RedisStore({
         client: redisClient,

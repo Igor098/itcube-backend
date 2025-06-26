@@ -10,6 +10,7 @@ import { StudentDto } from './dto/student.dto';
 import { DeleteResponseDto } from '@/libs/common/dto/delete-response.dto';
 import { format } from 'date-fns';
 import { parseDate } from '@/libs/common/utils/parse-date.util';
+import { StudentFilterDto } from './dto/student-filter.dto';
 
 @Injectable()
 export class StudentsService {
@@ -30,6 +31,29 @@ export class StudentsService {
     }
 
     return student;
+  }
+
+  public async filter(filter: StudentFilterDto, q: string): Promise<Student[]> {
+    const query = this.studentRepository.createQueryBuilder('student');
+
+    if (filter.age !== undefined) {
+      const today = new Date();
+      const maxBirthDate = new Date(
+        today.setFullYear(today.getFullYear() - filter.age),
+      );
+      const minBirthDate = new Date(today.setFullYear(today.getFullYear() - 1));
+
+      query.andWhere('student.birthDate BETWEEN :min AND :max', {
+        min: minBirthDate,
+        max: maxBirthDate,
+      });
+    }
+
+    if (q) {
+      query.andWhere('student.fullName ILIKE :q', { q: `%${q}%` });
+    }
+
+    return await query.getMany();
   }
 
   public async create(student: StudentDto): Promise<Student> {

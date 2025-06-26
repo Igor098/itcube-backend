@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import { IsOptional, IsBoolean, IsInt, Min } from 'class-validator';
 
 export class FilterProgramDto {
@@ -5,6 +6,7 @@ export class FilterProgramDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @Transform(({ value }) => parseInt(value))
   @IsOptional()
   @IsInt()
   @Min(40)
